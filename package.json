@@ -1,0 +1,26 @@
+{
+  "name": "update-package-dependencies",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.ts",
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/crijosicar/update-package-dependencies.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/crijosicar/update-package-dependencies/issues"
+  },
+  "homepage": "https://github.com/crijosicar/update-package-dependencies#readme",
+  "dependencies": {
+    "chalk": "^4.1.1",
+    "commander": "^7.2.0",
+    "lodash": "^4.17.21"
+  },
+  "devDependencies": {}
+}
