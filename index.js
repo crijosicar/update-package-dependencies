@@ -1,38 +1,30 @@
 'use strict';
 const { set, has, pick, toPairs, get } = require('lodash');
-const { sanitizeVersion, roundVersion, getJSONDataFromFile, writePackageJSONFile, getUpdateStrategyNotation } = require('./utils');
+const { getJSONDataFromFile, writePackageJSONFile } = require('./file');
 const { projectRootFolder, packageJsonRootPath } = require('./commander');
 const chalk = require('chalk');
 const log = console.log;
 
-const shouldUpdateRootDependency = (dependencyVersionA, dependencyVersionB) => {
-    const cleanedVersionA = roundVersion(sanitizeVersion(dependencyVersionA));
-    const cleanedVersionB = roundVersion(sanitizeVersion(dependencyVersionB));
+const getNMDependencyVersion = (dependency) => {
+    const packageJsonNodeModulesPath = `${projectRootFolder}/node_modules/${dependency}/package.json`;
+    const packageJsonNodeModulesData = getJSONDataFromFile(packageJsonNodeModulesPath);
 
-    return cleanedVersionA > cleanedVersionB;
+    return get(packageJsonNodeModulesData, 'version');
 }
 
 (() => {
     log(chalk.blue.bgRed.bold('Process started\n'));
 
     const packageData = getJSONDataFromFile(packageJsonRootPath);
-    const { dependencies, devDependencies } = pick(packageData, ['dependencies', 'devDependendies']);
+    const { dependencies, devDependencies } = pick(packageData, ['dependencies', 'devDependencies']);
     const mergedDependencies = { ...dependencies, ...devDependencies };
 
     for (const [dependency, version] of toPairs(mergedDependencies)) {
-        const packageJsonNodeModulesPath = `${projectRootFolder}/node_modules/${dependency}/package.json`;
-        const packageJsonNodeModulesData = getJSONDataFromFile(packageJsonNodeModulesPath);
-        const packageJsonNodeModulesVersion = get(packageJsonNodeModulesData, 'version');
+        const packageJsonNMVersion = getNMDependencyVersion(dependency);
+        const dependencyType = has(dependencies, dependency) ? "dependencies" : "devDependencies";
 
-        //TODO: Should we validate if the version in dependency package is greater than version in root package ?
-        if(shouldUpdateRootDependency(packageJsonNodeModulesVersion, version)){
-            const dependencyFolder = has(dependencies, dependency) ? "dependencies" : "devDependencies";
-            //TODO: Should we include the update strategy from root package ?
-            const versionUpdated = `${getUpdateStrategyNotation(version)}${packageJsonNodeModulesVersion}`;
-
-            set(packageData, `${dependencyFolder}.${dependency}`, versionUpdated);
-            log(chalk.yellowBright(`Dependency ${chalk.green.bgBlack(dependency)} updated from version ${chalk.green.bgBlack(version)} to ${chalk.green.bgBlack(versionUpdated)}`));
-        }
+        set(packageData, `${dependencyType}.${dependency}`, `^${packageJsonNMVersion}`);
+        log(chalk.yellowBright(`| ${chalk.black.bgGreen.bold(dependencyType)} | Dependecy ${chalk.green.bgBlack(dependency)} updated FROM version ${chalk.green.bgBlack(version)} TO => ${chalk.green.bgBlack(`^${packageJsonNMVersion}`)}`));
     }
 
     writePackageJSONFile(packageData);
